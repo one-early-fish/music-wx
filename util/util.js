@@ -1,6 +1,7 @@
 const Encrypt = require("./crypto.js");
 const request = require("request");
 const querystring = require("querystring");
+const baseCookie = require("./init.js");
 
 request.debug = true;
 
@@ -40,6 +41,9 @@ function createWebAPIRequest(
   errorcallback
 ) {
   // console.log(cookie);
+  if (cookie.match(/_csrf=[^(;|$)]+/g))
+    data.csrf_token = cookie.match(/_csrf=[^(;|$)]+/g)[0].slice(6);
+  else data.csrf_token = "";
   const proxy = cookie.split("__proxy__")[1];
   cookie = cookie.split("__proxy__")[0];
   const cryptoreq = Encrypt(data);
@@ -53,7 +57,7 @@ function createWebAPIRequest(
       "Content-Type": "application/x-www-form-urlencoded",
       Referer: "http://music.163.com",
       Host: "music.163.com",
-      Cookie: cookie,
+      Cookie: baseCookie + (cookie ? "; " : "") +  cookie,
       "User-Agent": randomUserAgent()
     },
     body: querystring.stringify({
@@ -111,6 +115,7 @@ function createRequest(path, method, data) {
   });
 }
 module.exports = {
+  request,
   createWebAPIRequest,
   createRequest
 };
